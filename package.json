@@ -50,6 +50,9 @@
   "ct3aMetadata": {
     "initVersion": "7.15.0"
   },
+  "prisma": {
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+  },
   "importSort": {
     ".js, .jsx, .es6, .es": {
       "parser": "babylon",
@@ -59,8 +62,5 @@
       "parser": "typescript",
       "style": "eslint"
     }
-  },
-  "prisma": {
-    "seed": "ts-node prisma/seed.ts"
   }
 }

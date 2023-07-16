@@ -17,7 +17,7 @@ datasource db {
 
 model Tenant {
     id        String @id @default(cuid())
-    name      String @unique
+    name      String
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     services  Service[]
@@ -25,27 +25,15 @@ model Tenant {
 }
 
 model Service {
-    id                  String   @id @default(cuid())
-    tenantId            String
-    name                String
-    createdAt           DateTime @default(now())
-    updatedAt           DateTime @updatedAt
-    tenant              Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-    serviceVersions     ServiceVersion[]
-    environments        Environment[]
-    dependants          ServiceDependency[] @relation("dependants")
-    dependencies        ServiceDependency[] @relation("dependencies")
+    id              String   @id @default(cuid())
+    tenantId        String
+    name            String
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+    tenant          Tenant @relation(fields: [tenantId], references: [id])
+    serviceVersions ServiceVersion[]
 
     @@unique([tenantId, name])
-}
-
-model ServiceDependency {
-    serviceId     String
-    dependencyId  String
-    service       Service @relation("dependants", fields: [serviceId], references: [id], onDelete: Cascade)
-    dependency    Service @relation("dependencies", fields: [dependencyId], references: [id], onDelete: Cascade)
-
-    @@unique([serviceId, dependencyId])
 }
 
 model ServiceVersion {
@@ -54,8 +42,7 @@ model ServiceVersion {
     serviceId   String
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt
-    service     Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-    environmentVersions   EnvironmentVersion[]
+    service     Service @relation(fields: [serviceId], references: [id])
 
     @@unique([version, serviceId])
 }
@@ -66,17 +53,16 @@ model Environment {
     serviceId   String
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt
-    service     Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-    environmentVersions   EnvironmentVersion[]
+    service     Service @relation(fields: [serviceId], references: [id])
 
     @@unique([name, serviceId])
 }
 
-model EnvironmentVersion {
+model Environmentversion {
     environmentId     String
     serviceVersionId  String
-    environment       Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-    serviceVersion    ServiceVersion @relation(fields: [serviceVersionId], references: [id], onDelete: Cascade)
+    environment       Environment @relation(fields: [environmentId], references: [id])
+    serviceVersion    ServiceVersion @relation(fields: [serviceVersionId], references: [id])
 
     @@unique([environmentId, serviceVersionId])
 }
@@ -111,13 +97,13 @@ model Session {
 model User {
     id            String    @id @default(cuid())
     name          String?
-    email         String   @unique
+    email         String?   @unique
     emailVerified DateTime?
     image         String?
     tenantId      String
     accounts      Account[]
     sessions      Session[]
-    tenant        Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+    tenant        Tenant
 }
 
 model VerificationToken {

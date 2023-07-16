@@ -1,13 +1,14 @@
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { type GetServerSidePropsContext } from "next";
+import {type GetServerSidePropsContext} from "next";
 import {
   getServerSession,
   type NextAuthOptions,
   type DefaultSession,
 } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
-import { env } from "~/env.mjs";
-import { prisma } from "~/server/db";
+import {env} from "~/env.mjs";
+import {prisma} from "~/server/db";
+import {CustomPrismaAdapter} from "./customPrismaAdapter";
+import {Prisma} from '@prisma/client';
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -19,15 +20,17 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
+      tenant?: Prisma.TenantGetPayload<undefined>;
       // ...other properties
       // role: UserRole;
     } & DefaultSession["user"];
   }
 
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
+  interface User {
+    tenant?: Prisma.TenantGetPayload<undefined>;
+    // ...other properties
+    // role: UserRole;
+  }
 }
 
 /**
@@ -37,19 +40,29 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    session: ({ session, user }) => ({
+    session: ({session, user}) => ({
       ...session,
       user: {
         ...session.user,
         id: user.id,
+        tenant: user.tenant,
       },
     }),
   },
-  adapter: PrismaAdapter(prisma),
+  adapter: CustomPrismaAdapter(prisma),
   providers: [
     DiscordProvider({
       clientId: env.DISCORD_CLIENT_ID,
       clientSecret: env.DISCORD_CLIENT_SECRET,
+      async profile(profile) {
+        const tenant = await prisma.tenant.findFirst({
+          where: {
+            name: 'internal'
+          }
+        });
+
+        return {tenant: tenant, ...profile};
+      }
     }),
     /**
      * ...add more providers here.
